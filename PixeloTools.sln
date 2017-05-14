@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixeloTools.Common", "PixeloTools.Common\PixeloTools.Common.csproj", "{614656C4-9D75-4FDD-AABF-D007140E26FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixeloTools.Solving", "PixeloTools.Solving\PixeloTools.Solving.csproj", "{A6E069F0-542F-4AAC-9490-61AB058CDD8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixeloTools.GameSolver", "PixeloTools.GameSolver\PixeloTools.GameSolver.csproj", "{A05B5A00-FAEB-45F7-9EF9-DA448E3976EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixeloTools.Creator", "PixeloTools.Creator\PixeloTools.Creator.csproj", "{6AC46335-B856-476D-A5AA-78A3808A0D40}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{614656C4-9D75-4FDD-AABF-D007140E26FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{614656C4-9D75-4FDD-AABF-D007140E26FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{614656C4-9D75-4FDD-AABF-D007140E26FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{614656C4-9D75-4FDD-AABF-D007140E26FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6E069F0-542F-4AAC-9490-61AB058CDD8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E069F0-542F-4AAC-9490-61AB058CDD8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E069F0-542F-4AAC-9490-61AB058CDD8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E069F0-542F-4AAC-9490-61AB058CDD8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A05B5A00-FAEB-45F7-9EF9-DA448E3976EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A05B5A00-FAEB-45F7-9EF9-DA448E3976EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A05B5A00-FAEB-45F7-9EF9-DA448E3976EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A05B5A00-FAEB-45F7-9EF9-DA448E3976EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AC46335-B856-476D-A5AA-78A3808A0D40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AC46335-B856-476D-A5AA-78A3808A0D40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AC46335-B856-476D-A5AA-78A3808A0D40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AC46335-B856-476D-A5AA-78A3808A0D40}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
