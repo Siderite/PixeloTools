@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -333,35 +334,29 @@ namespace PixeloTools.Solving
                 .ToArray();
 
             var loop = enums.All(en => en.MoveNext());
-            var start = DateTime.Now;
             FinalSolutionCount = 0;
             var board = new Board(_data.Width, _data.Height);
             var p = -1;
             var rowsSkipped = 0;
+            var possibilities = enums.Aggregate(new BigInteger(1), (acc, val) => acc * val.Count);
+            var prevPossibilities = new BigInteger(0);
+            var start = DateTime.Now;
             while (loop)
             {
-                if (DateTime.Now-start>TimeSpan.FromSeconds(10))
+                if (prevPossibilities == 0 || (int)Math.Log((double)prevPossibilities, 10) > (int)Math.Log((double)possibilities, 10) || DateTime.Now - start > TimeSpan.FromSeconds(10))
                 {
-                    var possibilities = enums.Aggregate(1.0, (acc, val) => acc * (val.Count - val.Index));
                     Debug.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
-                    Console.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
+                    Console.WriteLine($"Possibilities left: {(double)possibilities:E5} solutions so far: {FinalSolutionCount}");
+                    prevPossibilities = possibilities;
                     start = DateTime.Now;
                 }
-                for (var i = p+1; i < enums.Length; i++)
+                for (var i = p + 1; i < enums.Length; i++)
                 {
                     var enumerator = enums[i];
                     var row = enumerator.Current;
                     for (var j = 0; j < row.Length; j++)
                     {
                         board.Set(j, i, row[j]);
-                    }
-                    // if complete board, check board data directly
-                    if (i == board.Height - 1)
-                    {
-                        if (board.GetData().ToString() != _data.ToString())
-                        {
-                            break;
-                        }
                     }
                     // get index where row is invalid to filter other similar rows
                     var invalidIndex = getInvalidColumnIndex(board, i);
@@ -371,35 +366,41 @@ namespace PixeloTools.Solving
                     }
                     else
                     {
-                        // try to remove rows that have the same values to the invalid index
-                        var nextRow = enumerator.PeekNext();
-                        while (nextRow != null && sameRowToIndex(row, nextRow, invalidIndex))
+                        Board.State[] nextRow = null;
+                        // remove rows that have the same value at the invalid index
+                        var rowsEliminated = new BigInteger(0);
+                        do
                         {
-                            if (!enumerator.MoveNext()) break;
-                            nextRow = enumerator.Current;
-                            rowsSkipped++;
+                            rowsEliminated++;
+                            nextRow = enumerator.PeekNext();
+                        } while (nextRow != null && row[invalidIndex] == nextRow[invalidIndex] && enumerator.MoveNext());
+                        rowsSkipped += (int)(rowsEliminated - 1);
+                        for (var k = i + 1; k < enums.Length; k++)
+                        {
+                            rowsEliminated *= enums[k].Count;
                         }
+                        possibilities -= rowsEliminated;
                         break;
                     }
                 }
                 if (p < 0) throw new Exception("Should not happen");
-                p++;
-                var isFinalSolution = p == enums.Length;
+                var isFinalSolution = p == enums.Length - 1;
                 if (isFinalSolution)
                 {
                     FinalSolutionCount++;
                     if (FinalSolutionCount <= MaxDisplayedSolutions)
                     {
                         Solutions.Add(board.Clone());
-                    } else if (FinalSolutionCount == MaxDisplayedSolutions + 1)
+                    }
+                    else if (FinalSolutionCount == MaxDisplayedSolutions + 1)
                     {
                         Console.WriteLine($"Only showing {MaxDisplayedSolutions} solutions");
                         Debug.WriteLine($"Only showing {MaxDisplayedSolutions} solutions");
                     }
                 }
+                if (p < enums.Length - 1) p++;
                 do
                 {
-                    if (p >= enums.Length) p = enums.Length - 1;
                     var moved = enums[p].MoveNext();
                     if (moved) break;
                     p--;
@@ -415,21 +416,15 @@ namespace PixeloTools.Solving
                 if (isFinalSolution)
                 {
                     p = -1;
-                } else
+                }
+                else
                 {
                     p--;
                 }
             }
+            Debug.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
+            Console.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
             Debug.WriteLine($"Skipped rows: {rowsSkipped}");
-        }
-
-        private bool sameRowToIndex(Board.State[] row1, Board.State[] row2, int index)
-        {
-            for (var i=0; i<=index; i++)
-            {
-                if (row1[i] != row2[i]) return false;
-            }
-            return true;
         }
 
         private int getInvalidColumnIndex(Board board, int rowIndex)
@@ -456,14 +451,23 @@ namespace PixeloTools.Solving
                         state = value;
                     }
                 }
-                if (list.Count > _data.Columns[j].Count) return j;
+                if (list.Count > _data.Columns[j].Count)
+                {
+                    return j;
+                }
                 if (state == Board.State.Occupied)
                 {
-                    if (list.Count == _data.Columns[j].Count || c > _data.Columns[j][list.Count]) return j;
+                    if (list.Count == _data.Columns[j].Count || c > _data.Columns[j][list.Count])
+                    {
+                        return j;
+                    }
                 }
                 for (var i = 0; i < list.Count; i++)
                 {
-                    if (list[i] != _data.Columns[j][i]) return j;
+                    if (list[i] != _data.Columns[j][i])
+                    {
+                        return j;
+                    }
                 }
             }
             return -1;
