@@ -45,6 +45,12 @@ namespace PixeloTools.Solving
             return true;
         }
 
+        public T PeekNext()
+        {
+            if (_index + 1 >= _list.Count) return default(T);
+            return _list[_index + 1];
+        }
+
         public void Reset()
         {
             _index = -1;

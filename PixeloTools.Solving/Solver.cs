@@ -23,16 +23,19 @@ namespace PixeloTools.Solving
             CreateFinalSolutions = true;
             CreatePartialSolutions = true;
             MaxPuzzleLevel = int.MaxValue;
+            MaxDisplayedSolutions = 20;
         }
 
         public bool CreatePartialSolutions { get; set; }
         public bool CreateFinalSolutions { get; set; }
         public int MaxPuzzleLevel { get; set; }
+        public int MaxDisplayedSolutions { get; set; }
 
         public List<Board> Boards { get; private set; }
         public List<Board> Solutions { get; private set; }
         public List<double> Combinations { get; private set; }
         public int MaxLevelReached { get; private set; }
+        public int FinalSolutionCount { get; private set; }
 
         public double GetTotalCombinations()
         {
@@ -331,18 +334,20 @@ namespace PixeloTools.Solving
 
             var loop = enums.All(en => en.MoveNext());
             var start = DateTime.Now;
+            FinalSolutionCount = 0;
+            var board = new Board(_data.Width, _data.Height);
+            var p = -1;
+            var rowsSkipped = 0;
             while (loop)
             {
-                var possibilities = enums.Aggregate(1.0, (acc, val) => acc * (val.Count - val.Index));
-                Debug.WriteLine($"Possibilities left: {possibilities}");
-                if (DateTime.Now-start>TimeSpan.FromSeconds(30))
+                if (DateTime.Now-start>TimeSpan.FromSeconds(10))
                 {
-                    Console.WriteLine($"Possibilities left: {possibilities}");
+                    var possibilities = enums.Aggregate(1.0, (acc, val) => acc * (val.Count - val.Index));
+                    Debug.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
+                    Console.WriteLine($"Possibilities left: {possibilities} solutions so far: {FinalSolutionCount}");
                     start = DateTime.Now;
                 }
-                var board = new Board(_data.Width, _data.Height);
-                var p = -1;
-                for (var i = 0; i < enums.Length; i++)
+                for (var i = p+1; i < enums.Length; i++)
                 {
                     var enumerator = enums[i];
                     var row = enumerator.Current;
@@ -350,25 +355,46 @@ namespace PixeloTools.Solving
                     {
                         board.Set(j, i, row[j]);
                     }
-                    if (isValid(board, i))
+                    // if complete board, check board data directly
+                    if (i == board.Height - 1)
+                    {
+                        if (board.GetData().ToString() != _data.ToString())
+                        {
+                            break;
+                        }
+                    }
+                    // get index where row is invalid to filter other similar rows
+                    var invalidIndex = getInvalidColumnIndex(board, i);
+                    if (invalidIndex == -1)
                     {
                         p = i;
                     }
                     else
                     {
+                        // try to remove rows that have the same values to the invalid index
+                        var nextRow = enumerator.PeekNext();
+                        while (nextRow != null && sameRowToIndex(row, nextRow, invalidIndex))
+                        {
+                            if (!enumerator.MoveNext()) break;
+                            nextRow = enumerator.Current;
+                            rowsSkipped++;
+                        }
                         break;
                     }
                 }
                 if (p < 0) throw new Exception("Should not happen");
                 p++;
-                if (p == enums.Length)
+                var isFinalSolution = p == enums.Length;
+                if (isFinalSolution)
                 {
-                    Solutions.Add(board);
-                    if (Solutions.Count > 9)
+                    FinalSolutionCount++;
+                    if (FinalSolutionCount <= MaxDisplayedSolutions)
                     {
-                        Console.WriteLine("Only showing 10 solutions");
-                        Debug.WriteLine("Only showing 10 solutions");
-                        break;
+                        Solutions.Add(board.Clone());
+                    } else if (FinalSolutionCount == MaxDisplayedSolutions + 1)
+                    {
+                        Console.WriteLine($"Only showing {MaxDisplayedSolutions} solutions");
+                        Debug.WriteLine($"Only showing {MaxDisplayedSolutions} solutions");
                     }
                 }
                 do
@@ -386,35 +412,28 @@ namespace PixeloTools.Solving
                     var moved = enums[i].MoveNext();
                     if (!moved) throw new Exception("This should never happen");
                 }
+                if (isFinalSolution)
+                {
+                    p = -1;
+                } else
+                {
+                    p--;
+                }
             }
-
-            /*            Solutions.Add(new Board(_data.Width, _data.Height));
-                        foreach (var rowpos in _rowPossibilities.OrderBy(pos => pos.Index))
-                        {
-                            var l = Solutions.Count;
-                            for (var j=0; j<l; j++)
-                            {
-                                var sol = Solutions[j];
-                                foreach (var pos in rowpos.Possibilities)
-                                {
-                                    var newsol = sol.Clone();
-                                    for (var i = 0; i < pos.Length; i++)
-                                    {
-                                        newsol.Set(i, rowpos.Index, pos[i]);
-                                    }
-                                    Solutions.Add(newsol);
-                                }
-                            }
-                            Solutions.RemoveRange(0, l);
-                        }*/
+            Debug.WriteLine($"Skipped rows: {rowsSkipped}");
         }
 
-        private bool isValid(Board board, int rowIndex)
+        private bool sameRowToIndex(Board.State[] row1, Board.State[] row2, int index)
         {
-            if (rowIndex == board.Height - 1)
+            for (var i=0; i<=index; i++)
             {
-                return board.GetData().ToString() == _data.ToString();
+                if (row1[i] != row2[i]) return false;
             }
+            return true;
+        }
+
+        private int getInvalidColumnIndex(Board board, int rowIndex)
+        {
             for (var j = 0; j < board.Width; j++)
             {
                 var list = new List<int>();
@@ -437,17 +456,17 @@ namespace PixeloTools.Solving
                         state = value;
                     }
                 }
-                if (list.Count > _data.Columns[j].Count) return false;
+                if (list.Count > _data.Columns[j].Count) return j;
                 if (state == Board.State.Occupied)
                 {
-                    if (list.Count == _data.Columns[j].Count || c > _data.Columns[j][list.Count]) return false;
+                    if (list.Count == _data.Columns[j].Count || c > _data.Columns[j][list.Count]) return j;
                 }
                 for (var i = 0; i < list.Count; i++)
                 {
-                    if (list[i] != _data.Columns[j][i]) return false;
+                    if (list[i] != _data.Columns[j][i]) return j;
                 }
             }
-            return true;
+            return -1;
         }
     }
 }

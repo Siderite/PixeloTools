@@ -115,7 +115,7 @@ namespace PixeloTools.GameSolver
         {
             var solver = new Solver
             {
-                MaxPuzzleLevel = 2
+                MaxPuzzleLevel = 3
             };
             solver.Load(data);
             var now = DateTime.Now;
@@ -171,7 +171,7 @@ namespace PixeloTools.GameSolver
                     Console.ForegroundColor = ConsoleColor.Red;
                 }
                 Console.WriteLine();
-                Console.WriteLine("Final solutions (" + solver.Solutions.Count + ") :");
+                Console.WriteLine("Final solutions displayed (" + solver.Solutions.Count + ") :");
                 if (saved!=null)
                 {
                     Console.ForegroundColor = saved.Value;
@@ -180,7 +180,49 @@ namespace PixeloTools.GameSolver
                 {
                     displayBoard(solution);
                 }
+                saved = Console.ForegroundColor;
+                if (solver.Solutions.Count != 1)
+                {
+                    displayOverlapBoards(solver.Solutions);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                } else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                Console.WriteLine("Final solution count = " + solver.FinalSolutionCount);
+                if (saved != null)
+                {
+                    Console.ForegroundColor = saved.Value;
+                }
+                Console.WriteLine();
             }
+        }
+
+        private static void displayOverlapBoards(List<Board> solutions)
+        {
+            if (solutions.Count == 0) return;
+            var firstBoard = solutions[0];
+            var width = firstBoard.Width;
+            var height = firstBoard.Height;
+            var overboard = new Board(width, height);
+            for (var i = 0; i<height; i++)
+            {
+                for (var j=0; j<width; j++)
+                {
+                    var pixel = firstBoard.Get(j, i);
+                    overboard.Set(j, i, pixel);
+                    foreach (var board in solutions)
+                    {
+                        if (pixel != board.Get(j, i))
+                        {
+                            overboard.Set(j, i, Board.State.Any);
+                            break;
+                        }
+                    }
+                }
+            }
+            Console.WriteLine("Overlapped boards:");
+            displayBoard(overboard);
         }
 
         private static void displayEvolution(List<double> values)
